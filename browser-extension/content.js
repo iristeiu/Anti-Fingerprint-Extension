@@ -18,77 +18,108 @@
 
     // implementation of the Mulberry32 pseudo-random number generator (PRNG)
     function makePRNG(seedStr) {
-        let h = 0;
+        let a = 0, b = 0;
         for (let i = 0; i < seedStr.length; i++) {
-            h = Math.imul(31, h) + seedStr.charCodeAt(i) | 0;
+            const c = seedStr.charCodeAt(i);
+            a = Math.imul(31, a) + c | 0;
+            b = Math.imul(37, b) + c | 0;
         }
         return function () {
-            h |= 0; h = h + 0x6D2B79F5 | 0;          
-            let t = Math.imul(h ^ h >>> 15, 1 | h);   
-            t ^= t + Math.imul(t ^ t >>> 7, 61 | t);
-            return ((t ^ t >>> 14) >>> 0) / 4294967296; // normalize to [0, 1)
+            a |= 0; a = a + 0x6D2B79F5 | 0;
+            b |= 0; b = b + 0x9E3779B9 | 0;
+            let t = Math.imul(a ^ a >>> 15, 1 | b);
+            t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+            return ((t ^ t >>> 14) >>> 0) / 4294967296;
         };
     }
-    const rand = makePRNG(seed);
+    const rand    = makePRNG(seed);
+    const _cvRand = makePRNG(seed + '_cv');
+    const _audRand = makePRNG(seed + '_aud');
     const pick = (arr) => arr[Math.floor(rand() * arr.length)];
 
     // Value Pools
     // Values used for setting the identity of the browser
-    // Until now there are 3 Chrome versions on Windows 10 x64 — the most common UA pool globally
+    // Chrome versions on Windows 10 x64 -- sourced from StatCounter/IAmUnique reports
     // Structure of the profile:
     //          - the UA string
     //          - the platform string
     //          - full navigator.userAgentData structure (Client Hints API).
     const UA_PROFILES = [
         {
-            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
             platform: "Win32",
             uaData: {
-                brands: [{ brand: "Not(A:Brand", version: "99" }, { brand: "Google Chrome", version: "122" }, { brand: "Chromium", version: "122" }],
-                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "122",
+                brands: [{ brand: "Google Chrome", version: "142" }, { brand: "Chromium", version: "142" }, { brand: "Not A Brand", version: "24" }],
+                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "142",
             },
         },
         {
-            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36",
             platform: "Win32",
             uaData: {
-                brands: [{ brand: "Chromium", version: "124" }, { brand: "Google Chrome", version: "124" }, { brand: "Not-A.Brand", version: "99" }],
-                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "124",
+                brands: [{ brand: "Not A Brand", version: "24" }, { brand: "Chromium", version: "141" }, { brand: "Google Chrome", version: "141" }],
+                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "141",
             },
         },
         {
-            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
             platform: "Win32",
             uaData: {
-                brands: [{ brand: "Not_A Brand", version: "8" }, { brand: "Chromium", version: "120" }, { brand: "Google Chrome", version: "120" }],
-                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "120",
+                brands: [{ brand: "Chromium", version: "140" }, { brand: "Not A Brand", version: "24" }, { brand: "Google Chrome", version: "140" }],
+                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "140",
+            },
+        },
+        {
+            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+            platform: "Win32",
+            uaData: {
+                brands: [{ brand: "Google Chrome", version: "139" }, { brand: "Not A Brand", version: "24" }, { brand: "Chromium", version: "139" }],
+                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "139",
+            },
+        },
+        {
+            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            platform: "Win32",
+            uaData: {
+                brands: [{ brand: "Chromium", version: "138" }, { brand: "Google Chrome", version: "138" }, { brand: "Not A Brand", version: "24" }],
+                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "138",
+            },
+        },
+        {
+            ua: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
+            platform: "Win32",
+            uaData: {
+                brands: [{ brand: "Not A Brand", version: "24" }, { brand: "Google Chrome", version: "137" }, { brand: "Chromium", version: "137" }],
+                mobile: false, platform: "Windows", platformVersion: "10.0.0", chromeVersion: "137",
             },
         },
     ];
 
-    // These 4 entries cover the most common GPU/driver combinations
+    // Common GPU/driver combinations - sourced from Steam Hardware Survey
     const WEBGL_PROFILES = [
-        { vendor: "Google Inc. (Intel)", renderer: "ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
-        { vendor: "Google Inc. (Intel)", renderer: "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+        { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+        { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Laptop GPU Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+        { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 4060 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+        { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce RTX 3050 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
         { vendor: "Google Inc. (NVIDIA)", renderer: "ANGLE (NVIDIA, NVIDIA GeForce GTX 1650 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
-        { vendor: "Google Inc. (AMD)", renderer: "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+        { vendor: "Google Inc. (Intel)", renderer: "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)" },
+        { vendor: "Google Inc. (AMD)", renderer: "ANGLE (AMD, AMD Radeon RX 6600 Direct3D11 vs_5_0 ps_5_0, D3D11)" },
     ];
 
-    // Weights reflect real-world distribution: 8 GB appears 3 times to bias toward
-    // the most common laptop configuration without completely excluding others
-    const MEMORY_POOL   = [4, 8, 8, 8, 16];
-    // Logical CPU cores: 8 and 12 core machines dominate modern consumer hardware
-    const CPU_POOL      = [4, 8, 8, 12, 16];
+    // Weights reflect real-world distribution: 16 GB (41%), 32 GB (36.87%), 8 GB (7.82%)
+    const MEMORY_POOL   = [8, 16, 16, 16, 32, 32, 32];
+    // 6 cores (28.02%), 8 cores (27.45%), 4 cores (13.26%), 10 cores (7.27%), 16 cores (5.64%)
+    const CPU_POOL      = [4, 6, 6, 6, 8, 8, 8, 10, 16];
 
-    // Language lists
+    // Language lists — English (39.48%), Spanish (4.84%), German (2.84%), French (2.38%), Italian (0.64%)
     const LANGUAGE_POOL = [
+        ["en-GB", "en"],
+        ["en-GB", "en"],
+        ["en-US", "en"],
+        ["es-ES", "es", "en-GB", "en"],
         ["de-DE", "de", "en-GB", "en"],
         ["fr-FR", "fr", "en-GB", "en"],
-        ["en-GB", "en"],
         ["it-IT", "it", "en-GB", "en"],
-        ["es-ES", "es", "en-GB", "en"],
-        ["nl-NL", "nl", "en-GB", "en"],
-        ["pl-PL", "pl", "en-GB", "en"],
     ];
 
     // Timezone profiles for Western/Central Europe.
@@ -100,12 +131,18 @@
         { zone: "Europe/Rome",      offset: -120, gmtOffset: "+0200", name: "Central European Summer Time" },
     ];
 
-    // availHeight = height minus taskbar
+    // availHeight = height minus taskbar (~40px)
     const SCREEN_PROFILES = [
         { width: 1920, height: 1080, availWidth: 1920, availHeight: 1040 },
+        { width: 1536, height: 864,  availWidth: 1536, availHeight: 824  },
         { width: 1366, height: 768,  availWidth: 1366, availHeight: 728  },
         { width: 2560, height: 1440, availWidth: 2560, availHeight: 1400 },
-        { width: 1440, height: 900,  availWidth: 1440, availHeight: 860  },
+    ];
+
+    const CANVAS_FONT_POOL = [
+        'Arial', 'Verdana', 'Tahoma', 'Trebuchet MS',
+        'Georgia', 'Times New Roman', 'Courier New', 'Lucida Console',
+        'Segoe UI', 'Calibri', 'Cambria', 'Comic Sans MS',
     ];
 
     // Choose the consistent profile available during one session
@@ -116,6 +153,21 @@
     const languages    = pick(LANGUAGE_POOL);
     const tzProfile    = pick(TIMEZONE_POOL);
     const screenProfile = pick(SCREEN_PROFILES);
+    const _canvasSubstituteFont = pick(CANVAS_FONT_POOL);
+
+    // sync the picked UA profile to background.js
+    // content.js runs in world:MAIN so chrome.runtime is unavailable
+    // postMessage to bridge.js which forwards it using chrome.runtime.sendMessage
+    window.postMessage({
+        type: '__AFP_UPDATE_PROFILE__',
+        profile: {
+            ua:            uaProfile.ua,
+            chromeVersion: uaProfile.uaData.chromeVersion,
+            brands:        uaProfile.uaData.brands,
+            language:      languages[0],
+            languages:     languages,
+        }
+    }, '*');
 
     // Function toString() masking
     // It applies to all functions, including toString() itself
@@ -175,58 +227,61 @@
         configurable: true,
     });
 
-    // ------- WEBDRIVER --------
-    Object.defineProperty(Navigator.prototype, 'webdriver', {
-        get: () => false,
-        configurable: true,
-    });
-    // also patch the own property if present, not only the prototype
-    try {
-        Object.defineProperty(navigator, 'webdriver', { get: () => false, configurable: true });
-    } catch (_) {}
-
     // ------- NAVIGATOR -------
-    // Replace the Navigator.prototype so the spoofed values are inherited by iframes and any 
-    // other Navigator instances.
     const uad = uaProfile.uaData;
-    const navDescriptors = {
-        userAgent:           { get: () => uaProfile.ua },
-        appVersion:          { get: () => uaProfile.ua.replace("Mozilla/", "") },
-        platform:            { get: () => uaProfile.platform },
-        deviceMemory:        { get: () => memory },
-        hardwareConcurrency: { get: () => cpuCores },
-        language:            { get: () => languages[0] },
-        languages:           { get: () => Object.freeze([...languages]) },
-        vendor:              { get: () => "Google Inc." },
-        userAgentData: {
-            get: () => ({
-                brands:   uad.brands,
-                mobile:   uad.mobile,
-                platform: uad.platform,
-                getHighEntropyValues(hints) {
-                    return Promise.resolve({
-                        brands:          uad.brands,
-                        mobile:          uad.mobile,
-                        platform:        uad.platform,
-                        architecture:    "x86",
-                        bitness:         "64",
-                        model:           "",
-                        platformVersion: uad.platformVersion,
-                        uaFullVersion:   uad.chromeVersion + ".0.6261.112",
-                    });
-                },
-                toJSON() {
-                    return { 
-                        brands: uad.brands, 
-                        mobile: uad.mobile, 
-                        platform: uad.platform 
-                    };
-                },
-            }),
+
+    const _uadObject = {
+        brands:   uad.brands,
+        mobile:   uad.mobile,
+        platform: uad.platform,
+        getHighEntropyValues(hints) {
+            return Promise.resolve({
+                brands:          uad.brands,
+                mobile:          uad.mobile,
+                platform:        uad.platform,
+                architecture:    "x86",
+                bitness:         "64",
+                model:           "",
+                platformVersion: uad.platformVersion,
+                uaFullVersion:   uad.chromeVersion + ".0.6261.112",
+            });
+        },
+        toJSON() {
+            return { brands: uad.brands, mobile: uad.mobile, platform: uad.platform };
         },
     };
-    Object.entries(navDescriptors).forEach(([prop, descriptor]) => {
-        Object.defineProperty(Navigator.prototype, prop, { ...descriptor, configurable: true });
+    hideFn(_uadObject.getHighEntropyValues, 'getHighEntropyValues');
+    hideFn(_uadObject.toJSON, 'toJSON');
+
+    const _navSpoofed = {
+        userAgent:           uaProfile.ua,
+        appVersion:          uaProfile.ua.replace("Mozilla/", ""),
+        platform:            uaProfile.platform,
+        deviceMemory:        memory,
+        hardwareConcurrency: cpuCores,
+        language:            languages[0],
+        vendor:              "Google Inc.",
+        webdriver:           false,
+        userAgentData:       _uadObject,
+    };
+
+    const _realNavigator = navigator;
+    const _navigatorProxy = new Proxy(_realNavigator, {
+        get(target, prop) {
+            if (prop === 'languages') return Object.freeze([...languages]);
+            if (Object.prototype.hasOwnProperty.call(_navSpoofed, prop)) return _navSpoofed[prop];
+            const val = Reflect.get(target, prop, target);
+            return typeof val === 'function' ? val.bind(target) : val;
+        },
+        ownKeys:                  (t) => Reflect.ownKeys(t),
+        getOwnPropertyDescriptor: (t, p) => Reflect.getOwnPropertyDescriptor(t, p),
+        has:                      (t, p) => Reflect.has(t, p),
+    });
+
+    Object.defineProperty(window, 'navigator', {
+        get: () => _navigatorProxy,
+        enumerable: true,
+        configurable: true,
     });
 
     // -------- TIMEZONE -------
@@ -334,46 +389,22 @@
         hideFn(fake, name);
     });
 
-    // Date.toString() patch
-    // Format: 
-    //          "Mon May 04 2026 14:30:00 GMT+0200 (Central European Summer Time)"
+    // Date.toString() / toTimeString() patch
+    // Format: "Mon May 04 2026 14:30:00 GMT+0200 (Central European Summer Time)"
+    const _dateStrDays   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const _dateStrMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const _pad2 = n => String(n).padStart(2, '0');
+
     const _fakeDateToString = function toString() {
-        if (Number.isNaN(this.getTime())) 
-            return 'Invalid Date';
-
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            weekday: 'short', month: 'short', 
-            day: '2-digit', year: 'numeric', 
-            hour: '2-digit', minute: '2-digit',
-            second: '2-digit', hour12: false, 
-            timeZone: tzProfile.zone
-        });
-        const parts = formatter.formatToParts(this);
-        const p = {}; 
-        for (const part of parts) 
-            p[part.type] = part.value;
-
-        return `${p.weekday} ${p.month} ${p.day} ${p.year} ${p.hour}:${p.minute}:${p.second} GMT${tzProfile.gmtOffset} (${tzProfile.name})`;
+        if (Number.isNaN(this.getTime())) return 'Invalid Date';
+        return `${_dateStrDays[this.getDay()]} ${_dateStrMonths[this.getMonth()]} ${_pad2(this.getDate())} ${this.getFullYear()} ${_pad2(this.getHours())}:${_pad2(this.getMinutes())}:${_pad2(this.getSeconds())} GMT${tzProfile.gmtOffset} (${tzProfile.name})`;
     };
     _OrigDate.prototype.toString = _fakeDateToString;
     hideFn(_fakeDateToString, 'toString');
 
-    // Date.toTimeString() patch
     const _fakeDateToTimeString = function toTimeString() {
-        if (Number.isNaN(this.getTime())) 
-            return 'Invalid Date';
-
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            hour: '2-digit', minute: '2-digit', 
-            second: '2-digit', hour12: false, 
-            timeZone: tzProfile.zone
-        });
-        const parts = formatter.formatToParts(this);
-        const p = {}; 
-        for (const part of parts) 
-            p[part.type] = part.value;
-
-        return `${p.hour}:${p.minute}:${p.second} GMT${tzProfile.gmtOffset} (${tzProfile.name})`;
+        if (Number.isNaN(this.getTime())) return 'Invalid Date';
+        return `${_pad2(this.getHours())}:${_pad2(this.getMinutes())}:${_pad2(this.getSeconds())} GMT${tzProfile.gmtOffset} (${tzProfile.name})`;
     };
     _OrigDate.prototype.toTimeString = _fakeDateToTimeString;
     hideFn(_fakeDateToTimeString, 'toTimeString');
@@ -444,27 +475,88 @@
 
 
     // -------- CANVAS -------
-    // inject imperceptible sub-pixel position noise (0.0001 px) into
-    // fillText() and fillRect() calls
-    // noise is driven by the session PRNG
-    const origFillText = CanvasRenderingContext2D.prototype.fillText;
-    const fakeFillText = function fillText(text, x, y, maxWidth) {
-        // invisible to the eye but change the pixel hash
-        const dx = (rand() - 0.5) * 0.0001;
-        const dy = (rand() - 0.5) * 0.0001;
-        return maxWidth !== undefined
-            ? origFillText.call(this, text, x + dx, y + dy, maxWidth)
-            : origFillText.call(this, text, x + dx, y + dy);
-    };
-    CanvasRenderingContext2D.prototype.fillText = fakeFillText;
-    hideFn(fakeFillText, "fillText");
+    // (i) ParseColor - perturb each RGB channel of fillStyle/strokeStyle by +/-1.
+    // (ii) SetFont - substitute the requested font family with a session-chosen font.
+    // (iii) toDataURL - apply the same per-session deltas to every non-transparent pixel.
 
-    const origFillRect = CanvasRenderingContext2D.prototype.fillRect;
-    const fakeFillRect = function fillRect(x, y, w, h) {
-        return origFillRect.call(this, x + (rand() - 0.5) * 0.0001, y + (rand() - 0.5) * 0.0001, w, h);
+    const _colorDeltaR = _cvRand() > 0.5 ? 1 : -1;
+    const _colorDeltaG = _cvRand() > 0.5 ? 1 : -1;
+    const _colorDeltaB = _cvRand() > 0.5 ? 1 : -1;
+
+    const _colorNormCanvas = document.createElement('canvas');
+    _colorNormCanvas.width = _colorNormCanvas.height = 1;
+    const _colorNormCtx = _colorNormCanvas.getContext('2d');
+
+    const _origFillStyleDesc   = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'fillStyle');
+    const _origStrokeStyleDesc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'strokeStyle');
+
+    function _perturbColor(value) {
+        if (typeof value !== 'string') return value;
+        _origFillStyleDesc.set.call(_colorNormCtx, value);
+        const normalized = _origFillStyleDesc.get.call(_colorNormCtx);
+        const m = normalized.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+        if (!m) return value;
+        const r = Math.max(0, Math.min(255, +m[1] + _colorDeltaR));
+        const g = Math.max(0, Math.min(255, +m[2] + _colorDeltaG));
+        const b = Math.max(0, Math.min(255, +m[3] + _colorDeltaB));
+        return m[4] !== undefined ? `rgba(${r},${g},${b},${m[4]})` : `rgb(${r},${g},${b})`;
+    }
+
+    const _fakeFillStyleSet = function(value) {
+        _origFillStyleDesc.set.call(this, _perturbColor(value));
     };
-    CanvasRenderingContext2D.prototype.fillRect = fakeFillRect;
-    hideFn(fakeFillRect, "fillRect");
+    const _fakeFillStyleGet = _origFillStyleDesc.get;
+    Object.defineProperty(CanvasRenderingContext2D.prototype, 'fillStyle', {
+        get: _fakeFillStyleGet, set: _fakeFillStyleSet, configurable: true,
+    });
+    hideFn(_fakeFillStyleSet, 'set fillStyle');
+
+    const _fakeStrokeStyleSet = function(value) {
+        _origStrokeStyleDesc.set.call(this, _perturbColor(value));
+    };
+    const _fakeStrokeStyleGet = _origStrokeStyleDesc.get;
+    Object.defineProperty(CanvasRenderingContext2D.prototype, 'strokeStyle', {
+        get: _fakeStrokeStyleGet, set: _fakeStrokeStyleSet, configurable: true,
+    });
+    hideFn(_fakeStrokeStyleSet, 'set strokeStyle');
+
+    const _origFontDesc = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'font');
+    const _fakeFontSet = function(value) {
+        const modified = value.replace(
+            /(\d+(?:\.\d+)?(?:px|pt|em|rem|%|vh|vw))\s+.+$/,
+            `$1 ${_canvasSubstituteFont}`
+        );
+        _origFontDesc.set.call(this, modified || value);
+    };
+    Object.defineProperty(CanvasRenderingContext2D.prototype, 'font', {
+        get: _origFontDesc.get, set: _fakeFontSet, configurable: true,
+    });
+    hideFn(_fakeFontSet, 'set font');
+
+    const _origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+    HTMLCanvasElement.prototype.toDataURL = function(type, quality) {
+        const w = this.width, h = this.height;
+        if (!w || !h) return _origToDataURL.call(this, type, quality);
+        try {
+            const tmp = document.createElement('canvas');
+            tmp.width = w; tmp.height = h;
+            const tctx = tmp.getContext('2d');
+            tctx.drawImage(this, 0, 0);
+            const id = tctx.getImageData(0, 0, w, h);
+            const d  = id.data;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i + 3] === 0) continue;
+                d[i]     = Math.max(0, Math.min(255, d[i]     + _colorDeltaR));
+                d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + _colorDeltaG));
+                d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + _colorDeltaB));
+            }
+            tctx.putImageData(id, 0, 0);
+            return _origToDataURL.call(tmp, type, quality);
+        } catch (_) {
+            return _origToDataURL.call(this, type, quality);
+        }
+    };
+    hideFn(HTMLCanvasElement.prototype.toDataURL, 'toDataURL');
 
 
     // ------- WEBGL -----
@@ -490,45 +582,48 @@
 
 
     // ------- AUDIO -------
-    // add a tiny deterministic offset to the first N samples of every AudioBuffer channel
-    const audioNoise = new WeakMap();
-
-    // create 5 noise samples for each pair
-    // using 5 samples is sufficient to alter the fingerprint hash without visibly affecting audio playback quality
-    function getBufferNoise(buffer, channel) {
-        if (!audioNoise.has(buffer)) audioNoise.set(buffer, {});
-        const map = audioNoise.get(buffer);
-        if (!map[channel]) {
-            map[channel] = Array.from({ length: 5 }, () => (rand() - 0.5) * 1e-7);
-        }
-        return map[channel];
-    }
+    const audioNoised = new WeakMap();
 
     if (typeof AudioBuffer !== 'undefined') {
         const origGetChannelData = AudioBuffer.prototype.getChannelData;
+
+        function ensureNoised(buffer, channel) {
+            if (!audioNoised.has(buffer)) audioNoised.set(buffer, new Set());
+            const applied = audioNoised.get(buffer);
+            if (applied.has(channel)) return;
+            applied.add(channel);
+
+            const data = origGetChannelData.call(buffer, channel);
+            const len  = data.length;
+
+            const winLen   = Math.floor(len * (0.7 + _audRand() * 0.2));
+            const winStart = Math.floor(_audRand() * (len - winLen));
+
+            const chunkSize = 200;
+            for (let chunkStart = winStart; chunkStart < winStart + winLen; chunkStart += chunkSize) {
+                const frac         = (chunkStart - winStart) / winLen;
+                const edgeFade     = Math.min(frac, 1 - frac) * 2;
+                const chunkEnd     = Math.min(chunkStart + chunkSize, winStart + winLen);
+                const chunkDensity = _audRand() * 0.25 * edgeFade;
+                for (let i = chunkStart; i < chunkEnd; i++) {
+                    if (_audRand() < chunkDensity) {
+                        data[i] += (_audRand() - 0.5) * 1e-5;
+                    }
+                }
+            }
+        }
+
         const fakeGetChannelData = function getChannelData(channel) {
-            const data  = origGetChannelData.call(this, channel);
-            const noise = getBufferNoise(this, channel);
-
-            for (let i = 0; i < noise.length && i < data.length; i++) 
-                data[i] += noise[i];
-
-            return data;
+            ensureNoised(this, channel);
+            return origGetChannelData.call(this, channel);
         };
         AudioBuffer.prototype.getChannelData = fakeGetChannelData;
         hideFn(fakeGetChannelData, "getChannelData");
 
         const origCopyFromChannel = AudioBuffer.prototype.copyFromChannel;
         const fakeCopyFromChannel = function copyFromChannel(destination, channelNumber, startInChannel = 0) {
+            ensureNoised(this, channelNumber);
             origCopyFromChannel.call(this, destination, channelNumber, startInChannel);
-            const noise = getBufferNoise(this, channelNumber);
-            
-            // apply only the noise samples that fall within the destination slice
-            for (let i = 0; i < noise.length; i++) {
-                const destIdx = i - startInChannel;
-                if (destIdx >= 0 && destIdx < destination.length) 
-                    destination[destIdx] += noise[i];
-            }
         };
         AudioBuffer.prototype.copyFromChannel = fakeCopyFromChannel;
         hideFn(fakeCopyFromChannel, "copyFromChannel");
@@ -665,6 +760,24 @@
         })(_gi);
     }
 
+    // Local-time setters
+    var _setterMap = {
+        setHours: 'setUTCHours', setMinutes: 'setUTCMinutes',
+        setSeconds: 'setUTCSeconds', setMilliseconds: 'setUTCMilliseconds',
+        setDate: 'setUTCDate', setMonth: 'setUTCMonth', setFullYear: 'setUTCFullYear'
+    };
+    Object.keys(_setterMap).forEach(function(name) {
+        var utcName = _setterMap[name];
+        var orig = _OrigDate.prototype[utcName];
+        Date.prototype[name] = function() {
+            var args = Array.prototype.slice.call(arguments);
+            var shifted = new _OrigDate(this.getTime() - TZ_OFF * 60000);
+            orig.apply(shifted, args);
+            this.setTime(shifted.getTime() + TZ_OFF * 60000);
+            return this.getTime();
+        };
+    });
+
     // String helpers for Date.toString()
     var _p2 = function(n) { return String(n).padStart(2,'0'); };
     var _DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -786,20 +899,32 @@
     function spoofIframeWindow(cw) {
         if (!cw) return;
         try {
-            if (cw.__ninja_spoofed) return;
-            cw.__ninja_spoofed = true;
+            if (cw.spoofed) return;
+            cw.spoofed = true;
 
             // Replace Date and Intl directly
             Object.defineProperty(cw, 'Date', { value: window.Date, configurable: true });
             Object.defineProperty(cw, 'Intl', { value: window.Intl, configurable: true });
 
-            // Navigator - must reapply all descriptors to that prototype
-            const navProto = cw.Navigator && cw.Navigator.prototype;
-            if (navProto) {
-                Object.entries(navDescriptors).forEach(([prop, desc]) => {
-                    Object.defineProperty(navProto, prop, { ...desc, configurable: true });
+            // Navigator — wrap the iframe's navigator with the same Proxy pattern
+            if (cw.navigator) {
+                const _iframeNav = cw.navigator;
+                const _iframeNavProxy = new cw.Proxy(_iframeNav, {
+                    get(target, prop) {
+                        if (prop === 'languages') return cw.Object.freeze([...languages]);
+                        if (cw.Object.prototype.hasOwnProperty.call(_navSpoofed, prop)) return _navSpoofed[prop];
+                        const val = cw.Reflect.get(target, prop, target);
+                        return typeof val === 'function' ? val.bind(target) : val;
+                    },
+                    ownKeys:                  (t) => cw.Reflect.ownKeys(t),
+                    getOwnPropertyDescriptor: (t, p) => cw.Reflect.getOwnPropertyDescriptor(t, p),
+                    has:                      (t, p) => cw.Reflect.has(t, p),
                 });
-                Object.defineProperty(navProto, 'webdriver', { get: () => false, configurable: true });
+                cw.Object.defineProperty(cw, 'navigator', {
+                    get: () => _iframeNavProxy,
+                    enumerable: true,
+                    configurable: true,
+                });
             }
 
             // Screen - same principle
